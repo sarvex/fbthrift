@@ -79,8 +79,7 @@ def main():
                 'unframed, framed, http')
     else:
         if options.servertype == 'TCppServer':
-            if not options.header:
-                op.error('TCppServer cannot be used without header')
+            op.error('TCppServer cannot be used without header')
         elif options.servertype == 'TNonblockingServer':
             print('Framed transport')
         else:
@@ -90,7 +89,7 @@ def main():
     if options.servertype == 'TCppServer':
         server = TCppServer.TCppServer(processor)
         server.setPort(options.port)
-        print('Worker threads: ' + str(options.workers))
+        print(f'Worker threads: {str(options.workers)}')
         server.setNWorkerThreads(options.workers)
     else:
         transport = TSocket.TServerSocket(options.port)
@@ -102,14 +101,18 @@ def main():
             server = TProcessPoolServer.TProcessPoolServer(processor, transport,
                                                            tfactory,
                                                            pfactory)
-            print('Worker processes: ' + str(options.workers))
+            print(f'Worker processes: {str(options.workers)}')
             server.setNumWorkers(options.workers)
         else:
             ServerClass = getattr(TServer, options.servertype)
             server = ServerClass(processor, transport, tfactory, pfactory)
 
-    print('Serving ' + options.servertype +
-          ' requests on port %d...' % (options.port,))
+    print(
+        (
+            f'Serving {options.servertype}'
+            + ' requests on port %d...' % (options.port,)
+        )
+    )
     server.serve()
 
 if __name__ == '__main__':

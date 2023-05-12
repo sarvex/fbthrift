@@ -27,9 +27,7 @@ from t_output import Output
 global_out = None
 
 def out(str = None):
-    if not str:
-        return global_out
-    return global_out(str)
+    return global_out if not str else global_out(str)
 
 class Primitive(object):
     '''
@@ -53,7 +51,7 @@ class Primitive(object):
     def __getstate__(self):
         'Remove transitive data'
         persistent = ('_text', '_scope', '_parent', '_opts')
-        return dict((attr, getattr(self, attr)) for attr in persistent)
+        return {attr: getattr(self, attr) for attr in persistent}
 
     def __setstate__(self, state):
         "Don't set the context, we will use the one from the topmost scope"
@@ -72,10 +70,8 @@ class Primitive(object):
     def __setattr__(self, attr, value):
         # if it's set in the init method
         # or if it's an attribute that already exists
-        if not '_initialized' in self.__dict__ or \
-                attr in self.__dict__:
+        if '_initialized' not in self.__dict__ or attr in self.__dict__:
             self.__dict__[attr] = value
-        # else set it to _opts
         else:
             self.__dict__['_opts'][attr] = value
 
@@ -214,29 +210,28 @@ class LogicalScope:
         # either our parent's parent, or ourselves if we've got no parent
         self._topmost = parent is not None and parent.topmost or self
 
-        if parent is not None:
-            if not isinstance(parent, LogicalScope):
-                raise TypeError("A LogicalScope's parent must be another "
-                                "LogicalScope or None")
-            assert context is None, \
-                'Only the topmost scope may keep a context reference'
-        # this is the topmost scope
-        else:
+        if parent is None:
             # we're live if we have been instantiated with a context.
             # This flag cannot change, it's set in stone
             self._live = context is not None
             if self._live:
                 self._set_context(context)
 
+        elif not isinstance(parent, LogicalScope):
+            raise TypeError("A LogicalScope's parent must be another "
+                            "LogicalScope or None")
+        else:
+            assert context is None, \
+                    'Only the topmost scope may keep a context reference'
         # make the options more easily accessible
         self._opts = Values(opts)
         if factory_class is not None:
             assert parent is None, \
-              'Only the topmost scope holds the reference to the factory class'
+                  'Only the topmost scope holds the reference to the factory class'
             self.primitive_factory_class = factory_class
         else:
             assert parent is not None, \
-              "Cannot provide factory_class argument to non-topmost scopes"
+                  "Cannot provide factory_class argument to non-topmost scopes"
 
         if self.is_live is False:  # property of topmost scope
             # allocate an in-memory store for children of this scope
@@ -252,8 +247,9 @@ class LogicalScope:
     def __getstate__(self):
         'Return only non-transitive data'
         persistent = ('_parent', '_children', '_topmost', '_opts')
-        return dict((attr, getattr(self, attr)) for attr in persistent \
-                    if hasattr(self, attr))
+        return {
+            attr: getattr(self, attr) for attr in persistent if hasattr(self, attr)
+        }
 
     def __setstate__(self, state):
         self.__dict__.update(state)
@@ -274,9 +270,7 @@ class LogicalScope:
         global global_out
         global_out = self
         if self.parent is not None:
-            returned = self.enter_scope_callback(self._global_context,
-                                                 self)
-            if returned:
+            if returned := self.enter_scope_callback(self._global_context, self):
                 changes = returned
         self._global_context.enter_scope(self, **changes)
         self._acquired = 1
@@ -305,9 +299,7 @@ class LogicalScope:
         global global_out
         global_out = self.parent
         if self.parent is not None:
-            returned = self.exit_scope_callback(self._global_context,
-                                                self)
-            if returned:
+            if returned := self.exit_scope_callback(self._global_context, self):
                 changes = returned
         self._global_context.exit_scope(self, **changes)
         self._acquired = 2
@@ -387,7 +379,7 @@ class LogicalScope:
     def __getattr__(self, attr):
         # only redirect to public methods of the PrimitiveFactory
         if attr.startswith('_'):
-            raise AttributeError("LogicalScope has no attribute " + attr)
+            raise AttributeError(f"LogicalScope has no attribute {attr}")
         func = getattr(self._factory, attr)
         # wrap it
 
@@ -397,6 +389,7 @@ class LogicalScope:
             p = func(*args, **kwargs)
             self.add(p)
             return p
+
         return wrapper
 
     def add(self, primitive):

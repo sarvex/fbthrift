@@ -103,7 +103,7 @@ class TProcessPoolServer(TServer):
         self.serverTransport.listen()
 
         # fork the children
-        for i in range(self.numWorkers):
+        for _ in range(self.numWorkers):
             try:
                 w = Process(target=self.workerProcess)
                 w.daemon = True

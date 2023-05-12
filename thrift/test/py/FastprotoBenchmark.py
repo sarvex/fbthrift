@@ -25,7 +25,7 @@ ooe.aString = "This is my rifle" * 100
 ooe.aDouble = 2.3456789012
 ooe.aFloat = 12345.678
 ooe.aList = [12, 34, 56, 78, 90, 100, 123, 456, 789]
-ooe.aSet = set(["This", "is", "my", "rifle"])
+ooe.aSet = {"This", "is", "my", "rifle"}
 ooe.aMap = {"What": 4, "a": 1, "wonderful": 9, "day": 3, "!": 1}
 ooe.aStruct = AStruct(aString="isn't it?", anInteger=999)
 
@@ -130,7 +130,7 @@ def memory_usage_fastproto():
     global ooe
     for pid in (0, 2):
         before = hp.heap()
-        for i in range(iters):
+        for _ in range(iters):
             buf = fastproto.encode(
                     ooe,
                     [OneOfEach, OneOfEach.thrift_spec, False],
@@ -146,7 +146,7 @@ def memory_usage_fastproto():
 
     for pid in (0, 2):
         before = hp.heap()
-        for i in range(iters):
+        for _ in range(iters):
             trans = TTransport.TMemoryBuffer(
                     binary_buf if pid == 0 else compact_buf)
             ooe_local = OneOfEach()

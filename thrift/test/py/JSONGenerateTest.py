@@ -66,7 +66,7 @@ class TestJSONGenerate(unittest.TestCase):
 
     def testGen(self):
         for thriftFile in self.thriftFiles + self.unsupportedThriftFiles:
-            path = 'thrift/test/' + thriftFile + '.thrift'
+            path = f'thrift/test/{thriftFile}.thrift'
             self.assertTrue(os.path.exists(path))
             proc = subprocess.Popen(
                 ['_bin/thrift/compiler/thrift', '-gen', 'json', path],
@@ -82,7 +82,7 @@ class TestJSONGenerate(unittest.TestCase):
                 data = json.load(jsonData)
 
         for JSONFile in self.unsupportedThriftFiles:
-            path = 'gen-json/' + JSONFile + '.json'
+            path = f'gen-json/{JSONFile}.json'
             jsonData = open(path)
             self.assertRaises(TypeError, json.loads, jsonData)
 

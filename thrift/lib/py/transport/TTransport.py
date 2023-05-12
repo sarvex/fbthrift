@@ -148,8 +148,7 @@ class TBufferedTransportFactory:
     """Factory transport that builds buffered transports"""
 
     def getTransport(self, trans):
-        buffered = TBufferedTransport(trans)
-        return buffered
+        return TBufferedTransport(trans)
 
 
 class TBufferedTransport(TTransportBase, CReadableTransport):
@@ -283,8 +282,7 @@ class TFramedTransportFactory:
     """Factory transport that builds framed transports"""
 
     def getTransport(self, trans):
-        framed = TFramedTransport(trans)
-        return framed
+        return TFramedTransport(trans)
 
 
 class TFramedTransport(TTransportBase, CReadableTransport):

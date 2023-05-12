@@ -114,7 +114,7 @@ class AbstractTest(object):
             port)
 
         if not wait_for_server(port, 5.0, ssl=cls.ssl):
-            msg = "Failed to start " + cls.server_type
+            msg = f"Failed to start {cls.server_type}"
             if cls.ssl:
                 msg += " using ssl"
             if cls.server_header:
@@ -430,9 +430,12 @@ def add_test_classes(module):
                             'server_context': server_context,
                             'multiple': multiple,
                         }
-                        classes.append(new_test_class(NormalBinaryTest, vars))
-                        classes.append(new_test_class(AcceleratedBinaryTest,
-                            vars))
+                        classes.extend(
+                            (
+                                new_test_class(NormalBinaryTest, vars),
+                                new_test_class(AcceleratedBinaryTest, vars),
+                            )
+                        )
                         # header client to non-header server hangs
                         if server_header:
                             classes.append(new_test_class(HeaderTest, vars))

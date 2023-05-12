@@ -24,8 +24,7 @@ import math
 import json
 import sys
 sys.path.insert(0, './gen-py')
-lib_path = glob.glob('../../lib/py/build/lib.*')
-if lib_path:
+if lib_path := glob.glob('../../lib/py/build/lib.*'):
     sys.path.insert(0, lib_path[0])
 
 from myBinaryStruct.ttypes import *
@@ -90,15 +89,16 @@ class SimpleJSONToThriftTest(unittest.TestCase):
         self.I32StructBad = myI32Struct(a=0xFFFFFFFFEDCBA)
 
         self.mixedStruct = myMixedStruct(
-               a=[],
-               b=[mySuperSimpleStruct(a=5)],
-               c={'flame': -8, 'fire': -191},
-               d={},
-               e=set([1, 2, 3, 4]))
+            a=[],
+            b=[mySuperSimpleStruct(a=5)],
+            c={'flame': -8, 'fire': -191},
+            d={},
+            e={1, 2, 3, 4},
+        )
 
-        self.setStruct1 = mySetStruct(a=set([4, 8, 15, 16]))
+        self.setStruct1 = mySetStruct(a={4, 8, 15, 16})
         self.setStruct2 = mySetStruct(a=set([]))
-        self.setStructBad = mySetStruct(a=set([1, 0xFFFFFFFFFF, 2]))
+        self.setStructBad = mySetStruct(a={1, 0xFFFFFFFFFF, 2})
 
         self.mapStruct = myMapStruct(
             stringMap={"a": "A", "b": "B"},
@@ -128,13 +128,13 @@ class SimpleJSONToThriftTest(unittest.TestCase):
 
         self.collectionStruct1 = myCollectionStruct(
             l=[1.11, 2.22],
-            s=set([1.11, 2.22]),
+            s={1.11, 2.22},
             m={1.11: 1.11, 2.22: 2.22},
             ll=[myTestStruct(d=3.33)],
         )
         self.collectionStruct2 = myCollectionStruct(
             l=[float("nan")],
-            s=set([float("nan")]),
+            s={float("nan")},
             m={float("nan"): float("nan")},
             ll=[myTestStruct(d=float("nan"))],
         )

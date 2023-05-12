@@ -216,5 +216,4 @@ class THeaderProtocolFactory(object):
         self.client_types = client_types
 
     def getProtocol(self, trans):
-        prot = THeaderProtocol(trans, self.strictRead, self.client_types)
-        return prot
+        return THeaderProtocol(trans, self.strictRead, self.client_types)

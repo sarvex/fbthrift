@@ -292,7 +292,7 @@ class TThreadPoolServer(TServer):
         """
         Start a fixed number of worker threads and put client into a queue
         """
-        for i in range(self.threads):
+        for _ in range(self.threads):
             try:
                 t = threading.Thread(target=self.serveThread)
                 t.daemon = self.daemon
@@ -381,14 +381,13 @@ class TForkingServer(TServer):
 
                     ecode = 0
                     try:
-                        try:
-                            while True:
-                                self.processor.process(iprot, oprot, context)
-                        except TTransport.TTransportException as tx:
-                            pass
-                        except Exception as e:
-                            logging.exception(e)
-                            ecode = 1
+                        while True:
+                            self.processor.process(iprot, oprot, context)
+                    except TTransport.TTransportException as tx:
+                        pass
+                    except Exception as e:
+                        logging.exception(e)
+                        ecode = 1
                     finally:
                         self.serverEventHandler.connectionDestroyed(context)
                         tryClose(itrans)

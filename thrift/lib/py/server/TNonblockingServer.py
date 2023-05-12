@@ -227,8 +227,9 @@ class Connection:
         The one wakes up main thread.
         """
         if self.status != WAIT_PROCESS:
-            logging.error("Connection status switched to {} when"
-                    "processing requests. Server bug?".format(self.status))
+            logging.error(
+                f"Connection status switched to {self.status} whenprocessing requests. Server bug?"
+            )
             all_ok = False
 
         if not all_ok:
@@ -272,8 +273,6 @@ class TNonblockingServer(TServer.TServer):
         self.threads = int(threads)
         self.clients = {}
         self.max_queue_size = maxQueueSize  # do not set this as a hard size
-                                            # maximum - the queue may need
-                                            # extra space for close()
         self.tasks = Queue.Queue()
         self._read, self._write = _create_socketpair()
         self.prepared = False
@@ -281,11 +280,11 @@ class TNonblockingServer(TServer.TServer):
         self.serverEventHandler = TServer.TServerEventHandler()
         self.select_timeout = DEFAULT_SELECT_TIMEOUT
         self.poller = TSocket.ConnectionEpoll() if hasattr(select, "epoll") \
-                else TSocket.ConnectionSelect()
+                    else TSocket.ConnectionSelect()
         self.last_logged_error = 0
-        timeouts = [x for x in [self.select_timeout, readTimeout] \
-                        if x is not None]
-        if len(timeouts) > 0:
+        if timeouts := [
+            x for x in [self.select_timeout, readTimeout] if x is not None
+        ]:
             self.select_timeout = min(timeouts)
         self._readTimeout = readTimeout
 
@@ -362,7 +361,7 @@ class TNonblockingServer(TServer.TServer):
             return self.poller.process(self.select_timeout)
         except Exception as e:
             if not (isinstance(e, IOError) and e.errno == errno.EINTR):
-                self.log_poll_problem("problem polling: %s" % e)
+                self.log_poll_problem(f"problem polling: {e}")
             return [], [], []
 
     def handle(self):

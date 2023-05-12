@@ -40,7 +40,7 @@ def process_method(oneway=False):
             handler_ctx = self._event_handler.getHandlerContext(
                 fn_name, server_ctx,
             )
-            args = getattr(sys.modules[func.__module__], fn_name + "_args")()
+            args = getattr(sys.modules[func.__module__], f"{fn_name}_args")()
             reply_type = TMessageType.REPLY
             self._event_handler.preRead(handler_ctx, fn_name, args)
             args.read(iprot)
@@ -57,7 +57,9 @@ def process_method(oneway=False):
                 oprot.writeMessageEnd()
                 oprot.trans.flush()
                 self._event_handler.postWrite(handler_ctx, fn_name, result)
+
         return nested
+
     return _decorator
 
 

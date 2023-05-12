@@ -214,7 +214,7 @@ class ImplOnlyStatement(Primitive):
 
 class SameLineStmt(Primitive):
     def _write(self, context):
-        txt = ' ' + str(self)
+        txt = f' {str(self)}'
         context.output.write(txt)
 
 

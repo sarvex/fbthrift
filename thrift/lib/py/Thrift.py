@@ -183,25 +183,19 @@ class TApplicationException(TException):
             (fname, ftype, fid) = iprot.readFieldBegin()
             if ftype == TType.STOP:
                 break
-            if fid == 1:
-                if ftype == TType.STRING:
-                    message = iprot.readString()
-                    if sys.version_info.major >= 3 and isinstance(message,
-                                                                  bytes):
-                        try:
-                            message = message.decode('utf-8')
-                        except UnicodeDecodeError:
-                            pass
-                    self.message = message
-                else:
-                    iprot.skip(ftype)
-            elif fid == 2:
-                if ftype == TType.I32:
-                    self.type = iprot.readI32()
-                else:
-                    iprot.skip(ftype)
-            else:
+            if fid == 1 and ftype == TType.STRING:
+                message = iprot.readString()
+                if sys.version_info.major >= 3 and isinstance(message,
+                                                              bytes):
+                    try:
+                        message = message.decode('utf-8')
+                    except UnicodeDecodeError:
+                        pass
+                self.message = message
+            elif fid == 1 or fid == 2 and ftype != TType.I32 or fid != 2:
                 iprot.skip(ftype)
+            else:
+                self.type = iprot.readI32()
             iprot.readFieldEnd()
         iprot.readStructEnd()
 

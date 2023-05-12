@@ -92,18 +92,20 @@ class ValidationTest(unittest.TestCase):
         self.wrong(myDoubleStruct(a=2))
 
     def testMixed(self):
-        self.valid(myMixedStruct(
-            a=[],
-            b=[mySuperSimpleStruct(a=5)],
-            c={'flame': -8, 'fire': -191},
-            d={},
-            e=set([1, 2, 3, 4])
-            ))
+        self.valid(
+            myMixedStruct(
+                a=[],
+                b=[mySuperSimpleStruct(a=5)],
+                c={'flame': -8, 'fire': -191},
+                d={},
+                e={1, 2, 3, 4},
+            )
+        )
 
     def testStruct(self):
-        self.valid(mySetStruct(a=set([4, 8, 15, 16])))
+        self.valid(mySetStruct(a={4, 8, 15, 16}))
         self.valid(mySetStruct(a=set([])))
-        self.wrong(mySetStruct(a=set([1, 0xFFFFFFFFFF, 2])))
+        self.wrong(mySetStruct(a={1, 0xFFFFFFFFFF, 2}))
 
     def testMap(self):
         self.valid(myMapStruct(

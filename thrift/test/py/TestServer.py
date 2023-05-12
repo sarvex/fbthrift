@@ -31,8 +31,7 @@ import time
 
 sys.path.insert(0, './gen-py')
 sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
-lib_path = glob.glob('../../lib/py/build/lib.*')
-if lib_path:
+if lib_path := glob.glob('../../lib/py/build/lib.*'):
     sys.path.insert(0, lib_path[0])
 from optparse import OptionParser
 
@@ -64,7 +63,7 @@ class TestHandler(ThriftTest.Iface):
         print('testVoid()')
 
     def testString(self, str):
-        print('testString(%s)' % str)
+        print(f'testString({str})')
         return str
 
     def testByte(self, byte):
@@ -97,7 +96,7 @@ class TestHandler(ThriftTest.Iface):
         return thing
 
     def testException(self, str):
-        print('testException(%s)' % str)
+        print(f'testException({str})')
         if str == 'Xception':
             x = Xception()
             x.errorCode = 1001
@@ -349,11 +348,11 @@ if __name__ == "__main__":
 
         server_class_name = args[0]
 
-        if args[0] == "TNonblockingServer":
+        if server_class_name == "TNonblockingServer":
             server = TNonblockingServer.TNonblockingServer(
                     processor, transport, pfactory,
                     readTimeout=options.timeout)
-        elif args[0] == "TProcessPoolServer":
+        elif server_class_name == "TProcessPoolServer":
             server = TProcessPoolServer.TProcessPoolServer(
                     processor, transport, tfactory, pfactory)
         else:

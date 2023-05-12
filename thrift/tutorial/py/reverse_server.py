@@ -19,7 +19,7 @@ class ReverseHandler(ContextFacebookBase,
         ContextFacebookBase.__init__(self, "reverse")
 
     def reverse(self, handler_ctx, req):
-        print("client_principal is {}".format(handler_ctx.getClientPrincipal()))
+        print(f"client_principal is {handler_ctx.getClientPrincipal()}")
         return ttypes.Response(str="".join(reversed(req.str)))
 
 processor = ReverseService.ContextProcessor(ReverseHandler())

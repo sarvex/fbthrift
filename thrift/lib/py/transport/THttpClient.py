@@ -75,7 +75,7 @@ class THttpClient(TTransportBase):
             self.host = parsed.hostname
             self.path = parsed.path
             if parsed.query:
-                self.path += '?%s' % parsed.query
+                self.path += f'?{parsed.query}'
         self.__wbuf = StringIO()
         self.__http = None
         self.__timeout = None
@@ -97,10 +97,7 @@ class THttpClient(TTransportBase):
         return self.__http is not None
 
     def setTimeout(self, ms):
-        if ms is None:
-            self.__timeout = None
-        else:
-            self.__timeout = ms / 1000.0
+        self.__timeout = None if ms is None else ms / 1000.0
 
     def setCustomHeaders(self, headers):
         self.__custom_headers = headers
@@ -135,11 +132,10 @@ class THttpClient(TTransportBase):
         self.__http.putheader('Content-Length', str(len(data)))
 
         if not self.__custom_headers or 'User-Agent' not in \
-                self.__custom_headers:
+                    self.__custom_headers:
             user_agent = 'Python/THttpClient'
-            script = os.path.basename(sys.argv[0])
-            if script:
-                user_agent = '%s (%s)' % (user_agent, urllib.quote(script))
+            if script := os.path.basename(sys.argv[0]):
+                user_agent = f'{user_agent} ({urllib.quote(script)})'
             self.__http.putheader('User-Agent', user_agent)
 
         if self.__custom_headers:

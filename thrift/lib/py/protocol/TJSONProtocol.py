@@ -56,9 +56,7 @@ CTYPES = {TType.BOOL:       'tf',
           TType.SET:        'set',
           TType.MAP:        'map'}
 
-JTYPES = {}
-for key in CTYPES.keys():
-    JTYPES[CTYPES[key]] = key
+JTYPES = {CTYPES[key]: key for key in CTYPES}
 
 
 class JSONBaseContext(object):
@@ -173,7 +171,7 @@ class TJSONProtocolBase(TProtocolBase):
         self.context.write()
         jsNumber = str(number)
         if self.context.escapeNum():
-            jsNumber = "%s%s%s" % (QUOTE, jsNumber, QUOTE)
+            jsNumber = f"{QUOTE}{jsNumber}{QUOTE}"
         self.trans.write(jsNumber)
 
     def writeJSONBase64(self, binary):
@@ -203,8 +201,9 @@ class TJSONProtocolBase(TProtocolBase):
     def readJSONSyntaxChar(self, character):
         current = self.reader.read()
         if character != current:
-            raise TProtocolException(TProtocolException.INVALID_DATA,
-                                     "Unexpected character: %s" % current)
+            raise TProtocolException(
+                TProtocolException.INVALID_DATA, f"Unexpected character: {current}"
+            )
 
     def readJSONString(self, skipContext):
         string = []
@@ -238,7 +237,7 @@ class TJSONProtocolBase(TProtocolBase):
         return ''.join(string)
 
     def isJSONNumeric(self, character):
-        return (True if NUMERIC_CHAR.find(character) != - 1 else False)
+        return NUMERIC_CHAR.find(character) != - 1
 
     def readJSONQuotes(self):
         if (self.context.escapeNum()):
@@ -373,7 +372,7 @@ class TJSONProtocol(TJSONProtocolBase):
     readListEnd = readCollectionEnd
 
     def readBool(self):
-        return (False if self.readJSONInteger() == 0 else True)
+        return self.readJSONInteger() != 0
 
     def readNumber(self):
         return self.readJSONInteger()
@@ -390,10 +389,7 @@ class TJSONProtocol(TJSONProtocolBase):
 
     def readString(self):
         string = self.readJSONString(False)
-        if sys.version_info.major >= 3:
-            # Generated code expects that protocols deal in bytes in Py3
-            return string.encode('utf-8')
-        return string
+        return string.encode('utf-8') if sys.version_info.major >= 3 else string
 
     def readBinary(self):
         return self.readJSONBase64()

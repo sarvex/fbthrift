@@ -33,16 +33,22 @@ class TProtocolDecorator():
     def __getattr__(self, name):
         if hasattr(self.protocol, name):
             member = getattr(self.protocol, name)
-        if type(member) in [MethodType, FunctionType, LambdaType,
-                BuiltinFunctionType, BuiltinMethodType]:
-            return lambda *args, **kwargs: self._wrap(member, args, kwargs)
-        else:
-            return member
-        raise AttributeError(name)
+        return (
+            (lambda *args, **kwargs: self._wrap(member, args, kwargs))
+            if type(member)
+            in [
+                MethodType,
+                FunctionType,
+                LambdaType,
+                BuiltinFunctionType,
+                BuiltinMethodType,
+            ]
+            else member
+        )
 
     def _wrap(self, func, args, kwargs):
-        if type(func) == MethodType:
-            result = func(*args, **kwargs)
-        else:
-            result = func(self.protocol, *args, **kwargs)
-        return result
+        return (
+            func(*args, **kwargs)
+            if type(func) == MethodType
+            else func(self.protocol, *args, **kwargs)
+        )

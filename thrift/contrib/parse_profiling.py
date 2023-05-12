@@ -80,11 +80,11 @@ def translate_file_addresses(filename, addresses, options):
 
         if options.printFunctions:
             function = proc.stdout.readline()
-            function = function.strip()
-            if not function:
-                raise Exception('unexpected EOF from addr2line')
-            address.function = function
+            if function := function.strip():
+                address.function = function
 
+            else:
+                raise Exception('unexpected EOF from addr2line')
         file_and_line = proc.stdout.readline()
         file_and_line = file_and_line.strip()
         if not file_and_line:
@@ -138,11 +138,9 @@ class Entry(object):
     def write(self, f, options):
         f.write(self.header)
         f.write('\n')
-        n = 0
-        for address in self.bt:
+        for n, address in enumerate(self.bt):
             f.write('  #%-2d %s:%s\n' % (n, address.sourceFile,
                                          address.sourceLine))
-            n += 1
             if options.printFunctions:
                 if address.function:
                     f.write('      %s\n' % (address.function,))
@@ -183,10 +181,9 @@ def process_file(in_file, out_file, options):
         if line == '\n' or line.startswith('Thrift virtual call info:'):
             continue
 
-        virt_call_match = virt_call_regex.match(line)
-        if virt_call_match:
-            num_calls = int(virt_call_match.group(1))
-            type_name = virt_call_match.group(2)
+        if virt_call_match := virt_call_regex.match(line):
+            num_calls = int(virt_call_match[1])
+            type_name = virt_call_match[2]
             if options.cxxfilt:
                 # Type names reported by typeid() are internal names.
                 # By default, c++filt doesn't demangle internal type names.
@@ -196,7 +193,7 @@ def process_file(in_file, out_file, options):
                 #
                 # If the output is being filtered through c++filt, prepend
                 # "_Z" to the type name to make it look like an external name.
-                type_name = '_Z' + type_name
+                type_name = f'_Z{type_name}'
             header = 'T_VIRTUAL_CALL: %d calls on "%s"' % \
                     (num_calls, type_name)
             if current_entry is not None:
@@ -204,14 +201,13 @@ def process_file(in_file, out_file, options):
             current_entry = Entry(header)
             continue
 
-        gen_prot_match = gen_prot_regex.match(line)
-        if gen_prot_match:
-            num_calls = int(gen_prot_match.group(1))
-            type_name1 = gen_prot_match.group(2)
-            type_name2 = gen_prot_match.group(3)
+        if gen_prot_match := gen_prot_regex.match(line):
+            num_calls = int(gen_prot_match[1])
+            type_name1 = gen_prot_match[2]
+            type_name2 = gen_prot_match[3]
             if options.cxxfilt:
-                type_name1 = '_Z' + type_name1
-                type_name2 = '_Z' + type_name2
+                type_name1 = f'_Z{type_name1}'
+                type_name2 = f'_Z{type_name2}'
             header = 'T_GENERIC_PROTOCOL: %d calls to "%s" with a "%s"' % \
                     (num_calls, type_name1, type_name2)
             if current_entry is not None:
@@ -219,13 +215,12 @@ def process_file(in_file, out_file, options):
             current_entry = Entry(header)
             continue
 
-        bt_match = bt_regex.match(line)
-        if bt_match:
+        if bt_match := bt_regex.match(line):
             if current_entry is None:
                 raise Exception('found backtrace frame before entry header')
-            frame_num = int(bt_match.group(1))
-            filename = bt_match.group(2)
-            address = bt_match.group(3)
+            frame_num = int(bt_match[1])
+            filename = bt_match[2]
+            address = bt_match[3]
             current_entry.addFrame(filename, address)
             continue
 

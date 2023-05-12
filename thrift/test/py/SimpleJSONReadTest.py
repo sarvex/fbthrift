@@ -93,14 +93,12 @@ class TestSimpleJSONRead(unittest.TestCase):
         self.assertEqual(stuff_read.anotherString, "Hey")
 
     def test_set(self):
-        stuff = Stuff(
-                aListOfSet=[set(["hello"]), set(["world"])],
-                anotherString="Hey")
+        stuff = Stuff(aListOfSet=[{"hello"}, {"world"}], anotherString="Hey")
         j = writeToJSON(stuff)
         stuff_read = readStuffFromJSON(j)
         self.assertEqual(len(stuff_read.aListOfSet), 2)
-        self.assertEqual(stuff_read.aListOfSet[0], set(["hello"]))
-        self.assertEqual(stuff_read.aListOfSet[1], set(["world"]))
+        self.assertEqual(stuff_read.aListOfSet[0], {"hello"})
+        self.assertEqual(stuff_read.aListOfSet[1], {"world"})
         self.assertEqual(stuff_read.anotherString, "Hey")
 
     def test_struct(self):

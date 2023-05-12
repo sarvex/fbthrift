@@ -33,9 +33,13 @@ class TSSLSocketOverHttpTunnel(TSocketOverHttpTunnel):
             self.handle = sslh
         except ssl.SSLError as e:
             self.close()
-            raise TTransportException(TTransportException.NOT_OPEN,
-                    "SSL error during handshake: " + str(e))
+            raise TTransportException(
+                TTransportException.NOT_OPEN,
+                f"SSL error during handshake: {str(e)}",
+            )
         except socket.error as e:
             self.close()
-            raise TTransportException(TTransportException.NOT_OPEN,
-                    "socket error during SSL handshake: " + str(e))
+            raise TTransportException(
+                TTransportException.NOT_OPEN,
+                f"socket error during SSL handshake: {str(e)}",
+            )

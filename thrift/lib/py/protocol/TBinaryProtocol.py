@@ -50,11 +50,11 @@ class TBinaryProtocol(TProtocolBase):
         if self.strictWrite:
             self.writeI32(TBinaryProtocol.VERSION_1 | type)
             self.writeString(name)
-            self.writeI32(seqid)
         else:
             self.writeString(name)
             self.writeByte(type)
-            self.writeI32(seqid)
+
+        self.writeI32(seqid)
 
     def writeMessageEnd(self):
         pass
@@ -142,14 +142,13 @@ class TBinaryProtocol(TProtocolBase):
                         'Bad version in readMessageBegin: %d' % (sz))
             type = sz & TBinaryProtocol.TYPE_MASK
             name = self.readString()
-            seqid = self.readI32()
         else:
             if self.strictRead:
                 raise TProtocolException(TProtocolException.BAD_VERSION,
                         'No protocol version header')
             name = self.trans.readAll(sz)
             type = self.readByte()
-            seqid = self.readI32()
+        seqid = self.readI32()
         return (name, type, seqid)
 
     def readMessageEnd(self):
@@ -198,9 +197,7 @@ class TBinaryProtocol(TProtocolBase):
 
     def readBool(self):
         byte = self.readByte()
-        if byte == 0:
-            return False
-        return True
+        return byte != 0
 
     def readByte(self):
         buff = self.trans.readAll(1)
@@ -234,8 +231,7 @@ class TBinaryProtocol(TProtocolBase):
 
     def readString(self):
         len = self.readI32()
-        str = self.trans.readAll(len)
-        return str
+        return self.trans.readAll(len)
 
 
 class TBinaryProtocolFactory:
@@ -244,8 +240,7 @@ class TBinaryProtocolFactory:
         self.strictWrite = strictWrite
 
     def getProtocol(self, trans):
-        prot = TBinaryProtocol(trans, self.strictRead, self.strictWrite)
-        return prot
+        return TBinaryProtocol(trans, self.strictRead, self.strictWrite)
 
 
 class TBinaryProtocolAccelerated(TBinaryProtocol):

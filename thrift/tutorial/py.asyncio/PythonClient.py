@@ -20,14 +20,14 @@ def main(loop):
 
     # Wait for the server to solve this super hard problem indefinitely.
     sum = yield from asyncio.wait_for(client.add(1, 2), None)
-    print("1 + 2 = {}".format(sum))
+    print(f"1 + 2 = {sum}")
 
     # Try divide by zero.
     try:
         work = Work(num1=2, num2=0, op=Operation.DIVIDE)
         yield from asyncio.wait_for(client.calculate(1, work), None)
     except InvalidOperation as e:
-        print("InvalidOperation: {}".format(e))
+        print(f"InvalidOperation: {e}")
 
     # Make a few asynchronous calls concurrently and wait for all of them.
     start = time.time()

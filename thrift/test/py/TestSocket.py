@@ -26,8 +26,7 @@ from __future__ import unicode_literals
 
 import sys, glob
 sys.path.insert(0, './gen-py')
-lib_path = glob.glob('../../lib/py/build/lib.*')
-if lib_path:
+if lib_path := glob.glob('../../lib/py/build/lib.*'):
     sys.path.insert(0, lib_path[0])
 
 if sys.version_info[0] >= 3:
@@ -63,7 +62,7 @@ class TimeoutTest(unittest.TestCase):
 
         try:
             leaky = []
-            for i in xrange(100):
+            for _ in xrange(100):
                 socket = TSocket.TSocket('localhost', self.port)
                 socket.setTimeout(10)
                 socket.open()

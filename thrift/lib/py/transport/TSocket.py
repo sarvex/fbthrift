@@ -149,13 +149,12 @@ class TSocketBase(TTransportBase):
         if self._unix_socket is not None:
             return [(socket.AF_UNIX, socket.SOCK_STREAM, None, None,
                      self._unix_socket)]
-        else:
-            ai_flags = 0
-            if self.host is None:
-                ai_flags |= socket.AI_PASSIVE
-            return socket.getaddrinfo(self.host, self.port, family,
-                                      socket.SOCK_STREAM, 0,
-                                      ai_flags)
+        ai_flags = 0
+        if self.host is None:
+            ai_flags |= socket.AI_PASSIVE
+        return socket.getaddrinfo(self.host, self.port, family,
+                                  socket.SOCK_STREAM, 0,
+                                  ai_flags)
 
     def close(self):
         klist = self.handles.keys() if sys.version_info[0] < 3 else \
@@ -237,11 +236,7 @@ class TSocket(TSocketBase):
         return self.handle is not None
 
     def setTimeout(self, ms):
-        if ms is None:
-            self._timeout = None
-        else:
-            self._timeout = ms / 1000.0
-
+        self._timeout = None if ms is None else ms / 1000.0
         if self.handle is not None:
             self.handle.settimeout(self._timeout)
 
@@ -269,11 +264,10 @@ class TSocket(TSocketBase):
                 break
         except socket.error as e:
             if self._unix_socket:
-                message = 'Could not connect to socket %s: %s' % \
-                          (self._unix_socket, repr(e))
+                message = f'Could not connect to socket {self._unix_socket}: {repr(e)}'
             else:
                 message = 'Could not connect to %s:%d: %s' % \
-                          (self.host, self.port, repr(e))
+                              (self.host, self.port, repr(e))
             raise TTransportException(TTransportException.NOT_OPEN, message)
 
     def read(self, sz):
@@ -293,8 +287,7 @@ class TSocket(TSocketBase):
             try:
                 plus = self.handle.send(buff)
             except socket.error as e:
-                message = 'Socket send failed with error %s (%s)' % (e.errno,
-                        e.strerror)
+                message = f'Socket send failed with error {e.errno} ({e.strerror})'
                 raise TTransportException(TTransportException.UNKNOWN, message)
             assert plus > 0
             sent += plus
@@ -403,11 +396,7 @@ class TServerSocket(TSocketBase, TServerTransportBase):
         if self._queue:
             return self._queue.pop()
 
-        if hasattr(select, "epoll"):
-            poller = ConnectionEpoll()
-        else:
-            poller = ConnectionSelect()
-
+        poller = ConnectionEpoll() if hasattr(select, "epoll") else ConnectionSelect()
         for filenos in self.handles.keys():
             poller.read(filenos)
 

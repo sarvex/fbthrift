@@ -71,33 +71,35 @@ class AbstractTest():
 
     def buildOneOfEach(self):
         return OneOfEach(
-                aBool=True,
-                aByte=1,
-                anInteger16=234,
-                anInteger32=12345,
-                anInteger64=12345678910,
-                aBinary=b'abcd',
-                aDouble=1234567.901,
-                aFloat=12345.0,
-                aList=[12, 34, 567, 89],
-                aSet=set(["hello", "world", "good", "bye"]),
-                aMap={"hello": 1, "world": 20},
-                aStruct=AStruct(aString="str", anInteger=109))
+            aBool=True,
+            aByte=1,
+            anInteger16=234,
+            anInteger32=12345,
+            anInteger64=12345678910,
+            aBinary=b'abcd',
+            aDouble=1234567.901,
+            aFloat=12345.0,
+            aList=[12, 34, 567, 89],
+            aSet={"hello", "world", "good", "bye"},
+            aMap={"hello": 1, "world": 20},
+            aStruct=AStruct(aString="str", anInteger=109),
+        )
 
     def buildOneOfEachB(self):
         return OneOfEach(
-                aBool=True,
-                aByte=1,
-                anInteger16=234,
-                anInteger32=12345,
-                anInteger64=12345678910,
-                aBinary=b'abcd',
-                aDouble=1234567.901,
-                aFloat=12345.0,
-                aList=[12, 34, 567, 89],
-                aSet=set([b"hello", b"world", b"good", b"bye"]),
-                aMap={b"hello": 1, b"world": 20},
-                aStruct=AStruct(aString=b"str", anInteger=109))
+            aBool=True,
+            aByte=1,
+            anInteger16=234,
+            anInteger32=12345,
+            anInteger64=12345678910,
+            aBinary=b'abcd',
+            aDouble=1234567.901,
+            aFloat=12345.0,
+            aList=[12, 34, 567, 89],
+            aSet={b"hello", b"world", b"good", b"bye"},
+            aMap={b"hello": 1, b"world": 20},
+            aStruct=AStruct(aString=b"str", anInteger=109),
+        )
 
     def test_encode(self):
         self.encode_helper(self.buildOneOfEach())

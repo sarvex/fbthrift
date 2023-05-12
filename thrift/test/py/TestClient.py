@@ -27,8 +27,7 @@ from __future__ import unicode_literals
 import sys, glob, os
 
 sys.path.insert(0, './gen-py')
-lib_path = glob.glob('../../lib/py/build/lib.*')
-if lib_path:
+if lib_path := glob.glob('../../lib/py/build/lib.*'):
     sys.path.insert(0, lib_path[0])
 
 from ThriftTest import ThriftTest, SecondService
@@ -245,10 +244,7 @@ def suite():
 
 class OwnArgsTestProgram(unittest.TestProgram):
     def parseArgs(self, argv):
-        if args:
-            self.testNames = args
-        else:
-            self.testNames = (self.defaultTest,)
+        self.testNames = args if args else (self.defaultTest, )
         self.createTests()
 
 if __name__ == "__main__":

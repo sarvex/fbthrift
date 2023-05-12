@@ -96,7 +96,7 @@ class TJSONContext:
         self.indent(trans)
 
     def indent(self, trans):
-        for i in range(self.indentLevel):
+        for _ in range(self.indentLevel):
             trans.write(JSON_TAB)
 
 class TJSONPairContext(TJSONContext):
@@ -186,23 +186,19 @@ class StructSpec(ThriftSpec):
     Wraps thrift_spec of a thrift struct.
     '''
     def readFieldBegin(self, fname, guess_func):
-        field_spec = None
         self.nextSpec = None
-        for s in self.spec:
-            if s is not None and s[2] == fname:
-                field_spec = s
-                break
-
-        if field_spec is not None:
-            if field_spec[1] == TType.STRUCT:
-                self.nextSpec = StructSpec(field_spec[3][1])
-            elif field_spec[1] in (TType.SET, TType.LIST):
-                self.nextSpec = ListOrSetSpec(field_spec[3])
-            elif field_spec[1] == TType.MAP:
-                self.nextSpec = MapSpec(field_spec[3])
-            return (fname, field_spec[1], field_spec[0])
-        else:
+        field_spec = next(
+            (s for s in self.spec if s is not None and s[2] == fname), None
+        )
+        if field_spec is None:
             return (fname, guess_func(), 0)
+        if field_spec[1] == TType.STRUCT:
+            self.nextSpec = StructSpec(field_spec[3][1])
+        elif field_spec[1] in (TType.SET, TType.LIST):
+            self.nextSpec = ListOrSetSpec(field_spec[3])
+        elif field_spec[1] == TType.MAP:
+            self.nextSpec = MapSpec(field_spec[3])
+        return (fname, field_spec[1], field_spec[0])
 
     def getNextSpec(self):
         return self.nextSpec
@@ -315,10 +311,7 @@ class TSimpleJSONProtocolBase(TProtocolBase):
         skipped = 0
         while True:
             ch = self.reader.peek()
-            if not ch in (JSON_NEW_LINE,
-                          TAB,
-                          JSON_CARRIAGE_RETURN,
-                          JSON_SPACE):
+            if ch not in (JSON_NEW_LINE, TAB, JSON_CARRIAGE_RETURN, JSON_SPACE):
                 break
             self.reader.read()
             skipped += 1
@@ -330,7 +323,7 @@ class TSimpleJSONProtocolBase(TProtocolBase):
         self.context.skipColon = True
         self.skipWhitespace()
         byte = self.reader.peek()
-        if byte == JSON_OBJECT_END or byte == JSON_ARRAY_END:
+        if byte in [JSON_OBJECT_END, JSON_ARRAY_END]:
             return TType.STOP
         elif byte == JSON_STRING_DELIMITER:
             return TType.STRING
@@ -338,14 +331,15 @@ class TSimpleJSONProtocolBase(TProtocolBase):
             return TType.STRUCT
         elif byte == JSON_ARRAY_START:
             return TType.LIST
-        elif byte == b't' or byte == b'f':
+        elif byte in [b't', b'f']:
             return TType.BOOL
         elif byte in (b'+', b'-', b'0', b'1', b'2', b'3', b'4', b'5',
                 b'6', b'7', b'8', b'9'):
             return TType.DOUBLE
         else:
-            raise TProtocolException(TProtocolException.INVALID_DATA,
-                    "Unrecognized byte: {}".format(byte))
+            raise TProtocolException(
+                TProtocolException.INVALID_DATA, f"Unrecognized byte: {byte}"
+            )
 
     def writeJSONEscapeChar(self, ch):
         self.trans.write(JSON_ESCAPE_PREFIX)
@@ -464,8 +458,9 @@ class TSimpleJSONProtocolBase(TProtocolBase):
     def readJSONSyntaxChar(self, char):
         ch = self.reader.read()
         if ch != char:
-            raise TProtocolException(TProtocolException.INVALID_DATA,
-                                     "Unexpected character: %s" % ch)
+            raise TProtocolException(
+                TProtocolException.INVALID_DATA, f"Unexpected character: {ch}"
+            )
 
     def readJSONString(self, skipContext=False):
         self.skipWhitespace()
@@ -808,5 +803,4 @@ class TSimpleJSONProtocol(TSimpleJSONProtocolBase):
 
 class TSimpleJSONProtocolFactory:
     def getProtocol(self, trans, spec=None):
-        prot = TSimpleJSONProtocol(trans, spec)
-        return prot
+        return TSimpleJSONProtocol(trans, spec)

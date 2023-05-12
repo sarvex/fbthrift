@@ -73,8 +73,7 @@ def struct_to_dict(struct):
             value = getattr(struct, field.name, field.default)
         if value != field.default:
             if field.type == TType.STRUCT:
-                sub_dict = struct_to_dict(value)
-                if sub_dict:  # Do not include empty sub structs
+                if sub_dict := struct_to_dict(value):
                     adict[field.name] = sub_dict
             else:
                 adict[field.name] = value

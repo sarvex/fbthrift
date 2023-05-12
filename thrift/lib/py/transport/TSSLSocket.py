@@ -65,22 +65,22 @@ class TSSLSocket(TSocket):
                 else:
                     valid_names = self._getCertNames(cert, "DNS")
                     name = self.host
-                match = False
-                for valid_name in valid_names:
-                    if self._matchName(name, valid_name):
-                        match = True
-                        break
+                match = any(self._matchName(name, valid_name) for valid_name in valid_names)
                 if not match:
                     sslh.close()
                     raise TTransportException(TTransportException.NOT_OPEN,
                             "failed to verify certificate name")
             self.handle = sslh
         except ssl.SSLError as e:
-            raise TTransportException(TTransportException.NOT_OPEN,
-                            "SSL error during handshake: " + str(e))
+            raise TTransportException(
+                TTransportException.NOT_OPEN,
+                f"SSL error during handshake: {str(e)}",
+            )
         except socket.error as e:
-            raise TTransportException(TTransportException.NOT_OPEN,
-                            "socket error during SSL handshake: " + str(e))
+            raise TTransportException(
+                TTransportException.NOT_OPEN,
+                f"socket error during SSL handshake: {str(e)}",
+            )
 
     @staticmethod
     def _getCertNames(cert, includeAlt=None):
@@ -109,10 +109,10 @@ class TSSLSocket(TSocket):
         pattern_parts = pattern.split('.')
         if len(name_parts) != len(pattern_parts):
             return False
-        for n, p in zip(name_parts, pattern_parts):
-            if p != '*' and (n.lower() != p.lower()):
-                return False
-        return True
+        return not any(
+            p != '*' and (n.lower() != p.lower())
+            for n, p in zip(name_parts, pattern_parts)
+        )
 
 
 class TSSLServerSocket(TServerSocket):
@@ -151,7 +151,7 @@ class TSSLServerSocket(TServerSocket):
         unreadable.
         """
         if not os.access(certfile, os.R_OK):
-            raise IOError('No such certfile found: %s' % (certfile))
+            raise IOError(f'No such certfile found: {certfile}')
         self.certfile = certfile
 
     def setCertReqs(self, cert_reqs, ca_certs):

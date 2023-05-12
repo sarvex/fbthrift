@@ -29,9 +29,13 @@ class TSocketOverHttpTunnel(TSocket):
             status = res.split()[1]
             if status != '200':
                 self.close()
-                raise TTransportException(TTransportException.NOT_OPEN,
-                        "Error response from proxy server: %s" % res)
+                raise TTransportException(
+                    TTransportException.NOT_OPEN,
+                    f"Error response from proxy server: {res}",
+                )
         except IndexError:
             self.close()
-            raise TTransportException(TTransportException.NOT_OPEN,
-                    "Error response from proxy server: %s" % res)
+            raise TTransportException(
+                TTransportException.NOT_OPEN,
+                f"Error response from proxy server: {res}",
+            )

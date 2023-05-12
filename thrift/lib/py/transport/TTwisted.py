@@ -73,11 +73,7 @@ class ThriftClientProtocol(basic.Int32StringReceiver):
     def __init__(self, client_class, iprot_factory, oprot_factory=None):
         self._client_class = client_class
         self._iprot_factory = iprot_factory
-        if oprot_factory is None:
-            self._oprot_factory = iprot_factory
-        else:
-            self._oprot_factory = oprot_factory
-
+        self._oprot_factory = iprot_factory if oprot_factory is None else oprot_factory
         self._errormsg = None
         self.recv_map = {}
         self.started = defer.Deferred()
@@ -109,14 +105,13 @@ class ThriftClientProtocol(basic.Int32StringReceiver):
         try:
             method = self.recv_map[fname]
         except KeyError:
-            method = getattr(self.client, 'recv_' + fname)
+            method = getattr(self.client, f'recv_{fname}')
             self.recv_map[fname] = method
 
         method(iprot, mtype, rseqid)
 
     def lengthLimitExceeded(self, length):
-        self._errormsg = 'Received frame too large (%s > %s)' % (
-            length, self.MAX_LENGTH)
+        self._errormsg = f'Received frame too large ({length} > {self.MAX_LENGTH})'
         self.transport.loseConnection()
 
 
@@ -170,7 +165,7 @@ class ThriftHeaderServerProtocol(Protocol):
                 return
             if len(self.recvd) < length + 4:
                 break
-            packet = self.recvd[0:4 + length]
+            packet = self.recvd[:4 + length]
             self.recvd = self.recvd[4 + length:]
             self.stringReceived(packet)
 
@@ -224,11 +219,7 @@ class ThriftServerFactory(ServerFactory):
     def __init__(self, processor, iprot_factory, oprot_factory=None):
         self.processor = processor
         self.iprot_factory = iprot_factory
-        if oprot_factory is None:
-            self.oprot_factory = iprot_factory
-        else:
-            self.oprot_factory = oprot_factory
-
+        self.oprot_factory = iprot_factory if oprot_factory is None else oprot_factory
         if isinstance(iprot_factory, THeaderProtocolFactory):
             self.protocol = ThriftHeaderServerProtocol
 
@@ -241,10 +232,7 @@ class ThriftClientFactory(ClientFactory):
     def __init__(self, client_class, iprot_factory, oprot_factory=None):
         self.client_class = client_class
         self.iprot_factory = iprot_factory
-        if oprot_factory is None:
-            self.oprot_factory = iprot_factory
-        else:
-            self.oprot_factory = oprot_factory
+        self.oprot_factory = iprot_factory if oprot_factory is None else oprot_factory
 
     def buildProtocol(self, addr):
         p = self.protocol(self.client_class, self.iprot_factory,

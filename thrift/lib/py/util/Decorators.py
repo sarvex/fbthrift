@@ -35,8 +35,10 @@ def process_main(twisted=False):
             if name not in self._processMap:
                 iprot.skip(TType.STRUCT)
                 iprot.readMessageEnd()
-                x = TApplicationException(TApplicationException.UNKNOWN_METHOD,
-                        'Unknown function %s' % (name))
+                x = TApplicationException(
+                    TApplicationException.UNKNOWN_METHOD,
+                    f'Unknown function {name}',
+                )
                 oprot.writeMessageBegin(name, TMessageType.EXCEPTION, seqid)
                 x.write(oprot)
                 oprot.writeMessageEnd()
@@ -46,10 +48,7 @@ def process_main(twisted=False):
             else:
                 ret = self._processMap[name](self, seqid, iprot, oprot,
                         server_ctx)
-                if twisted is True:
-                    return ret
-                else:
-                    return True
+                return ret if twisted is True else True
 
         return nested
 
@@ -62,7 +61,7 @@ def process_method(oneway=False, twisted=False):
             fn_name = func.__name__.split('_', 1)[-1]
             handler_ctx = self._event_handler.getHandlerContext(fn_name,
                     server_ctx)
-            args = getattr(sys.modules[func.__module__], fn_name + "_args")()
+            args = getattr(sys.modules[func.__module__], f"{fn_name}_args")()
             reply_type = TMessageType.REPLY
             self._event_handler.preRead(handler_ctx, fn_name, args)
             args.read(iprot)

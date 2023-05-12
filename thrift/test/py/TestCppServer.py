@@ -86,11 +86,7 @@ class ParallelProcess(multiprocessing.Process):
         self.addr = addr
 
     def run(self):
-        clients = []
-
-        for i in range(0, 4):
-            clients.append(getClient(self.addr))
-
+        clients = [getClient(self.addr) for _ in range(0, 4)]
         for c in clients:
             c.send_sleep(3)
 
@@ -133,7 +129,7 @@ class TestServer(BaseFacebookTestCase):
         self.server_thread = threading.Thread(target=self.server.serve)
         self.server_thread.start()
 
-        for t in range(30):
+        for _ in range(30):
             addr = self.server.getAddress()
             if addr:
                 break
@@ -171,7 +167,7 @@ class TestServer(BaseFacebookTestCase):
         parallel.join()
 
         duration = time.time() - start_time
-        print("total time = {}".format(duration))
+        print(f"total time = {duration}")
 
         self.stopServer()
 

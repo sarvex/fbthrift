@@ -131,20 +131,16 @@ class CppGenerator(t_generator.Generator):
     def _base_type_name(self, tbase):
         if tbase in self._base_to_cpp_typename:
             return self._base_to_cpp_typename[tbase]
-        raise CompilerError('no C++ base type name for base type ' + tbase)
+        raise CompilerError(f'no C++ base type name for base type {tbase}')
 
     def _cpp_annotation(self, type, key, default=None):
-        t = _map_get(type.annotations, 'cpp2.' + key)
-        if t:
+        if t := _map_get(type.annotations, f'cpp2.{key}'):
             if self.flag_compatibility:
                 raise CompilerError(
                     'cpp2.{0} annotation not allowed in compatibility mode: '
                     '{1}'.format(key, type))
             return t
-        t = _map_get(type.annotations, 'cpp.' + key)
-        if t:
-            return t
-        return default
+        return t if (t := _map_get(type.annotations, f'cpp.{key}')) else default
 
     def _has_cpp_annotation(self, type, key):
         return self._cpp_annotation(type, key) is not None
@@ -184,36 +180,28 @@ class CppGenerator(t_generator.Generator):
                                                scope=scope)]
                 cname = cname + '<{0}, {1}>'
             elif ttype.is_set:
-                cname = 'std::set'
-                if template:
-                    cname = template
+                cname = template if template else 'std::set'
                 tset = ttype.as_set
                 inner_types = [self._type_name(tset.elem_type, in_typedef,
                                                scope=scope)]
                 cname = cname + "<{0}>"
             elif ttype.is_list:
-                cname = 'std::vector'
-                if template:
-                    cname = template
+                cname = template if template else 'std::vector'
                 tlist = ttype.as_list
                 inner_types = [self._type_name(tlist.elem_type, in_typedef,
                                                scope=scope)]
                 cname = cname + "<{0}>"
             if inner_types:
                 cname = cname.format(*inner_types)
-            if arg:
-                return self._reference_name(cname, unique)
-            else:
-                return cname
-
+            return self._reference_name(cname, unique) if arg else cname
         if in_typedef and (ttype.is_struct or ttype.is_xception) and \
-                ttype.program == self._program:
+                    ttype.program == self._program:
             if self.flag_compatibility:
                 scope('typedef ' + self._namespace_prefix(
                         self._program.get_namespace('cpp')) + ttype.name + \
-                          ' ' + ttype.name + ';')
+                              ' ' + ttype.name + ';')
             else:
-                scope('class ' + ttype.name + ';')
+                scope(f'class {ttype.name};')
 
         tname = self._cpp_type_name(ttype)
         if not tname:
@@ -221,7 +209,7 @@ class CppGenerator(t_generator.Generator):
             program = ttype.program
             if program is not None:
                 tname = self._namespace_prefix(self._get_namespace(program)) + \
-                        ttype.name
+                            ttype.name
             else:
                 tname = ttype.name
 
@@ -236,15 +224,15 @@ class CppGenerator(t_generator.Generator):
         elif ttype.is_enum:
             return True
         elif ttype.is_struct or ttype.is_xception:
-            for m in ttype.as_struct.members:
-                if m.req == e_req.optional \
-                  or self._has_cpp_annotation(m.type, 'template') \
-                  or not self._is_orderable_type(m.type):
-                    return False
-            return True
+            return not any(
+                m.req == e_req.optional
+                or self._has_cpp_annotation(m.type, 'template')
+                or not self._is_orderable_type(m.type)
+                for m in ttype.as_struct.members
+            )
         elif ttype.is_map and not ttype.as_map.is_unordered:
             return self._is_orderable_type(ttype.as_map.key_type) \
-                    and self._is_orderable_type(ttype.as_map.value_type)
+                        and self._is_orderable_type(ttype.as_map.value_type)
         elif ttype.is_set:
             return self._is_orderable_type(ttype.as_set.elem_type)
         elif ttype.is_list:
@@ -275,7 +263,7 @@ class CppGenerator(t_generator.Generator):
             return "const {0}&".format(name)
 
     def _get_namespace(self, program=None):
-        if program == None:
+        if program is None:
             program = self._program
         ns = program.get_namespace('cpp2')
         if ns == '':
@@ -322,9 +310,9 @@ class CppGenerator(t_generator.Generator):
             value_format = ' = {0.value}'
         else:
             value_format = ''
-            name_format = quote_names and '"{0.name}"' or enum + "::{0.name}"
+            name_format = '"{0.name}"' if quote_names else enum + "::{0.name}"
         return ',\n'.join((name_format + value_format).format(const) \
-                          for const in constants)
+                              for const in constants)
 
     def _generate_enum(self, tenum):
         '''
@@ -426,8 +414,8 @@ class CppGenerator(t_generator.Generator):
         if reference:
             result += '&'
         if unique:
-            result = "std::unique_ptr<" + result + ">"
-        result += ' ' + field.name
+            result = f"std::unique_ptr<{result}>"
+        result += f' {field.name}'
         if not reference:
             result += ';'
         return result
@@ -462,8 +450,8 @@ class CppGenerator(t_generator.Generator):
         elif t.is_list:
             suffix = 'T_LIST'
         if suffix is None:
-            raise TypeError('INVALID TYPE IN type_to_enum: ' + t.name)
-        return 'apache::thrift::protocol::' + suffix
+            raise TypeError(f'INVALID TYPE IN type_to_enum: {t.name}')
+        return f'apache::thrift::protocol::{suffix}'
 
     # =====================================================================
     # SERVICE INTERFACE
@@ -615,14 +603,11 @@ class CppGenerator(t_generator.Generator):
                                                result=True)
 
     def _generate_service_client(self, service, s):
-        classname = service.name + "AsyncClient"
+        classname = f"{service.name}AsyncClient"
         if not service.extends:
-            class_signature = 'class ' + classname + \
-                ' : public apache::thrift::TClientBase'
+            class_signature = f'class {classname} : public apache::thrift::TClientBase'
         else:
-            class_signature = 'class ' + classname + \
-                ' : public ' + self._type_name(service.extends) +\
-                'AsyncClient'
+            class_signature = f'class {classname} : public {self._type_name(service.extends)}AsyncClient'
         with s.cls(class_signature):
             out().label('public:')
 
@@ -635,8 +620,7 @@ class CppGenerator(t_generator.Generator):
               " channel_ptr;")
             init = OrderedDict()
             if service.extends:
-                init[self._type_name(service.extends) + 'AsyncClient'] = \
-                    'channel'
+                init[f'{self._type_name(service.extends)}AsyncClient'] = 'channel'
             if not service.extends:
                 init["channel_"] = "channel"
             # TODO: make it possible to create a connection context from a
@@ -696,20 +680,16 @@ class CppGenerator(t_generator.Generator):
 
     def _get_async_func_name(self, function):
         if self._is_processed_in_eb(function):
-            return 'async_eb_' + function.name
+            return f'async_eb_{function.name}'
         else:
-            return 'async_tm_' + function.name
+            return f'async_tm_{function.name}'
 
     def _generate_service_server_null(self, service, s):
-        classname = service.name + "SvNull"
+        classname = f"{service.name}SvNull"
         if not service.extends:
-            class_signature = "class " + classname + " : public " + \
-                service.name + \
-                "SvIf"
+            class_signature = f"class {classname} : public {service.name}SvIf"
         else:
-            class_signature = "class " + classname + " : public " + \
-                service.name + "SvIf, virtual public " + \
-                self._type_name(service.extends) + "SvIf"
+            class_signature = f"class {classname} : public {service.name}SvIf, virtual public {self._type_name(service.extends)}SvIf"
         with s.cls(class_signature):
             out().label('public:')
             out().defn('~{0}()'.format(classname), name=classname,
@@ -723,14 +703,14 @@ class CppGenerator(t_generator.Generator):
                             name=function.name,
                             modifiers='virtual'):
                         if not function.oneway and \
-                          not function.returntype.is_void and \
-                          not self._is_complex_type(function.returntype):
+                              not function.returntype.is_void and \
+                              not self._is_complex_type(function.returntype):
                             out('return ' +
                               self._default_value(function.returntype) + ';')
 
     def _generate_service_server_interface_async(self, service, s):
-        classname = service.name + "SvAsyncIf"
-        class_signature = "class " + classname
+        classname = f"{service.name}SvAsyncIf"
+        class_signature = f"class {classname}"
         with s.cls(class_signature):
             out().label('public:')
             out().defn('~{0}()'.format(classname), name=classname,
@@ -745,30 +725,28 @@ class CppGenerator(t_generator.Generator):
 
                 # TODO: Remove this once everything has migrated to async_eb or
                 # async_tm
-                out().defn(self._get_process_function_signature_async(service,
-                                                                  function),
-                       name="async_" + function.name,
-                       modifiers='virtual',
-                       delete=True)
-                out().defn(self._get_process_function_signature_future(
-                        service, function),
-                       name="future_" + function.name,
-                       modifiers='virtual',
-                       pure_virtual=True)
+                out().defn(
+                    self._get_process_function_signature_async(service, function),
+                    name=f"async_{function.name}",
+                    modifiers='virtual',
+                    delete=True,
+                )
+                out().defn(
+                    self._get_process_function_signature_future(service, function),
+                    name=f"future_{function.name}",
+                    modifiers='virtual',
+                    pure_virtual=True,
+                )
 
     def _generate_service_server_interface(self, service, s):
-        classname = service.name + "SvIf"
+        classname = f"{service.name}SvIf"
         if not service.extends:
-            class_signature = "class " + classname + " : public " + \
-                service.name + \
-                "SvAsyncIf, public apache::thrift::ServerInterface"
+            class_signature = f"class {classname} : public {service.name}SvAsyncIf, public apache::thrift::ServerInterface"
         else:
-            class_signature = "class " + classname + " : public " + \
-                service.name + "SvAsyncIf, virtual public " + \
-                self._type_name(service.extends) + "SvIf"
+            class_signature = f"class {classname} : public {service.name}SvAsyncIf, virtual public {self._type_name(service.extends)}SvIf"
         with s.cls(class_signature):
             out().label('public:')
-            out('typedef ' + service.name + 'AsyncProcessor ProcessorType;')
+            out(f'typedef {service.name}AsyncProcessor ProcessorType;')
             out().defn('~{0}()'.format(classname), name=classname,
                    modifiers='virtual',
                    in_header=True).scope.empty()
@@ -782,10 +760,9 @@ class CppGenerator(t_generator.Generator):
                           service.name))
             for function in service.functions:
                 with out().defn(self._get_prio_function_signature(service,
-                                                              function),
-                            name="getprio_" + function.name):
+                                                              function), name=f"getprio_{function.name}"):
                     if function.annotations is not None and \
-                            'priority' in function.annotations.annotations:
+                                'priority' in function.annotations.annotations:
                         prio = function.annotations.annotations['priority']
                     elif 'priority' in service.annotations:
                         prio = service.annotations['priority']
@@ -807,8 +784,8 @@ class CppGenerator(t_generator.Generator):
                       '"Function {0} is unimplemented");'
                       .format(function.name))
                     if not function.oneway and \
-                      not function.returntype.is_void and \
-                      not self._is_complex_type(function.returntype):
+                          not function.returntype.is_void and \
+                          not self._is_complex_type(function.returntype):
                         out('return ' +
                           self._default_value(function.returntype) + ';')
                 self._generate_server_future_function(service, function)
@@ -816,19 +793,18 @@ class CppGenerator(t_generator.Generator):
 
     def _generate_server_future_function(self, service, function):
         with out().defn(self._get_process_function_signature_future(service,
-                                                                    function),
-                    name="future_" + function.name):
+                                                                    function), name=f"future_{function.name}"):
             rettype = self._type_name(function.returntype)
             if self._is_complex_type(function.returntype) and \
-                    not self.flag_stack_arguments:
-                rettype = 'std::unique_ptr<' + rettype + '>'
+                        not self.flag_stack_arguments:
+                rettype = f'std::unique_ptr<{rettype}>'
 
             promise_name = self.tmp("promise")
             out("folly::Promise<{0}> {1};".format(rettype, promise_name))
             args = []
             for member in function.arglist.members:
                 if self._is_complex_type(member.type) \
-                  and not self.flag_stack_arguments:
+                      and not self.flag_stack_arguments:
                     args.append("std::move({0})".format(member.name))
                 else:
                     args.append(member.name)
@@ -841,27 +817,26 @@ class CppGenerator(t_generator.Generator):
                 else:
                     args.insert(0, "*_return")
             with out("try"):
-                if not function.oneway and not function.returntype.is_void:
-                    if self._is_complex_type(function.returntype) \
-                      and not self.flag_stack_arguments:
-                        out("std::unique_ptr<{0}> _return(new {0});"
-                          .format(self._type_name(function.returntype)))
-                        out("{0}({1});".format(function.name,
-                                             ", ".join(args)))
-                        out("{0}.setValue(std::move(_return));".format(
-                            promise_name))
-                    elif self._is_complex_type(function.returntype):
-                        out("{0} _return;".format(self._type_name(
-                            function.returntype)))
-                        out("{0}({1});".format(function.name,
-                                             ", ".join(args)))
-                        out("{0}.setValue(_return);".format(promise_name))
-                    else:
-                        out("{0}.setValue({1}({2}));"
-                          .format(promise_name, function.name, ", ".join(args)))
-                else:
+                if function.oneway or function.returntype.is_void:
                     out("{0}(".format(function.name) + ", ".join(args) + ");")
                     out("{0}.setValue();".format(promise_name))
+                elif self._is_complex_type(function.returntype) \
+                          and not self.flag_stack_arguments:
+                    out("std::unique_ptr<{0}> _return(new {0});"
+                      .format(self._type_name(function.returntype)))
+                    out("{0}({1});".format(function.name,
+                                         ", ".join(args)))
+                    out("{0}.setValue(std::move(_return));".format(
+                        promise_name))
+                elif self._is_complex_type(function.returntype):
+                    out("{0} _return;".format(self._type_name(
+                        function.returntype)))
+                    out("{0}({1});".format(function.name,
+                                         ", ".join(args)))
+                    out("{0}.setValue(_return);".format(promise_name))
+                else:
+                    out("{0}.setValue({1}({2}));"
+                      .format(promise_name, function.name, ", ".join(args)))
                 with out().catch("const std::exception& ex"):
                     out("{0}.setException(folly::exception_wrapper"
                         "(std::current_exception()));".format(
@@ -956,17 +931,17 @@ class CppGenerator(t_generator.Generator):
         sig = 'void {name}('
         if function.oneway:
             sig += 'std::unique_ptr<apache::thrift::HandlerCallbackBase>' + \
-                ' callback'
+                    ' callback'
         else:
             if self._is_complex_type(function.returntype) and \
-                 not self.flag_stack_arguments:
+                     not self.flag_stack_arguments:
                 rettype = self._type_name(function.returntype)
-                rettype = 'std::unique_ptr<' + rettype + '>'
+                rettype = f'std::unique_ptr<{rettype}>'
             else:
                 rettype = self._type_name(function.returntype)
 
             sig += ('std::unique_ptr<apache::thrift::HandlerCallback<{0}>>' + \
-                        ' callback').format(rettype)
+                            ' callback').format(rettype)
 
         sig += self._argument_list(function.arglist, True, unique=True)
         sig += ')'
@@ -975,10 +950,10 @@ class CppGenerator(t_generator.Generator):
     def _get_process_function_signature_future(self, service, function):
         rettype = self._type_name(function.returntype)
         if self._is_complex_type(function.returntype) and \
-                not self.flag_stack_arguments:
-            rettype = 'std::unique_ptr<' + rettype + '>'
+                    not self.flag_stack_arguments:
+            rettype = f'std::unique_ptr<{rettype}>'
         sig = 'folly::Future<' + \
-            rettype + '> {name}('
+                rettype + '> {name}('
 
         sig += self._argument_list(function.arglist, False, unique=True)
         sig += ')'
@@ -986,24 +961,24 @@ class CppGenerator(t_generator.Generator):
 
     def _get_process_function_signature(self, service, function):
         addcomma = False
-        if not function.oneway:
-            if self._is_complex_type(function.returntype):
-                sig = 'void {name}' + '({0}& _return'.format(
-                    self._type_name(function.returntype))
-                addcomma = True
-            else:
-                sig = self._type_name(function.returntype)
-                sig += ' {name}('
-        else:
+        if function.oneway:
             sig = 'void {name}('
+        elif self._is_complex_type(function.returntype):
+            sig = 'void {name}' + '({0}& _return'.format(
+                self._type_name(function.returntype))
+            addcomma = True
+        else:
+            sig = self._type_name(function.returntype)
+            sig += ' {name}('
         sig += self._argument_list(function.arglist, addcomma, unique=True)
         sig += ')'
         return sig
 
     def _get_prio_function_signature(self, service, function):
-        sig = 'apache::thrift::concurrency::PriorityThreadManager::PRIORITY ' \
-              '{name}(apache::thrift::Cpp2RequestContext* reqCtx)'
-        return sig
+        return (
+            'apache::thrift::concurrency::PriorityThreadManager::PRIORITY '
+            '{name}(apache::thrift::Cpp2RequestContext* reqCtx)'
+        )
 
     def _generate_app_ex(self, service, errorstr, functionname, seqid, is_in_eb,
                          s, reqCtx, static=True, err_code=None,
@@ -1012,13 +987,13 @@ class CppGenerator(t_generator.Generator):
             out('LOG(ERROR) << {0} << " in function {1}";'.format(
                     errorstr, functionname))
             code = '' if err_code is None else \
-                    'apache::thrift::TApplicationException::' \
-                    'TApplicationExceptionType::' + err_code + ', '
+                        'apache::thrift::TApplicationException::' \
+                        'TApplicationExceptionType::' + err_code + ', '
             out('apache::thrift::TApplicationException x({0}{1});'.
                 format(code, errorstr))
             if static:
                 ctx = 'ctx.get()'
-                out('ctx->userException({});'.format(uex_str))
+                out(f'ctx->userException({uex_str});')
             else:
                 ctx = 'nullptr'
             out('folly::IOBufQueue queue = serializeException("{0}", &prot, {1}, {2}, '
@@ -1042,13 +1017,12 @@ class CppGenerator(t_generator.Generator):
                     errorstr, functionname))
 
     def _generate_process_function(self, service, function):
-        if function.oneway:
-            if self._is_processed_in_eb(function):
-                # Old clients may not send the special
-                # oneway id, so we need to send a fake
-                # response to them while in event base.
-                with out('if (!req->isOneway())'):
-                    out('req->sendReply(std::unique_ptr<folly::IOBuf>());')
+        if function.oneway and self._is_processed_in_eb(function):
+            # Old clients may not send the special
+            # oneway id, so we need to send a fake
+            # response to them while in event base.
+            with out('if (!req->isOneway())'):
+                out('req->sendReply(std::unique_ptr<folly::IOBuf>());')
         out("// make sure getConnectionContext is null")
         out("// so async calls don't accidentally use it")
         out('iface_->setConnectionContext(nullptr);')
@@ -1098,21 +1072,21 @@ class CppGenerator(t_generator.Generator):
         args = []
         for member in function.arglist.members:
             if self.flag_stack_arguments:
-                args.append("args." + member.name)
+                args.append(f"args.{member.name}")
             elif self._is_complex_type(member.type):
                 args.append("std::move({0})".format(
                         aprefix + member.name))
             else:
-                args.append("*args." + member.name)
+                args.append(f"*args.{member.name}")
         if function.oneway:
             out('std::unique_ptr<apache::thrift::HandlerCallbackBase> callback(' +
               'new apache::thrift::HandlerCallbackBase(std::move(req), ' +
               'std::move(c), nullptr, nullptr, eb, tm, ctx));')
         else:
             if self._is_complex_type(function.returntype) and \
-                    not self.flag_stack_arguments:
+                        not self.flag_stack_arguments:
                 rettype = self._type_name(function.returntype)
-                rettype = 'std::unique_ptr<' + rettype + '>'
+                rettype = f'std::unique_ptr<{rettype}>'
             else:
                 rettype = self._type_name(function.returntype)
             out(('std::unique_ptr<apache::thrift::' +

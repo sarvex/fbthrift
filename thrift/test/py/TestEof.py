@@ -26,8 +26,7 @@ from __future__ import unicode_literals
 
 import sys, glob
 sys.path.insert(0, './gen-py')
-lib_path = glob.glob('../../lib/py/build/lib.*')
-if lib_path:
+if lib_path := glob.glob('../../lib/py/build/lib.*'):
     sys.path.insert(0, lib_path[0])
 
 if sys.version_info[0] >= 3:
@@ -106,7 +105,7 @@ class TestEof(unittest.TestCase):
         # TODO: we should make sure this covers more of the code paths
 
         for i in xrange(0, len(self.data) + 1):
-            trans = TTransport.TMemoryBuffer(self.data[0:i])
+            trans = TTransport.TMemoryBuffer(self.data[:i])
             prot = pfactory.getProtocol(trans)
             try:
                 x = Xtruct()

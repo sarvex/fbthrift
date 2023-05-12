@@ -109,8 +109,8 @@ class TGeventServer(TServer):
         else:
             self.server.init_socket()
 
-        print('Starting %s workers' % self.numWorkers)
-        for i in range(self.numWorkers - 1):  # Current process also serves
+        print(f'Starting {self.numWorkers} workers')
+        for _ in range(self.numWorkers - 1):
             p = Process(target=self.serve_forever)
             self.workers.append(p)
             p.start()

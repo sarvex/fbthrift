@@ -26,8 +26,7 @@ from __future__ import unicode_literals
 
 import sys, glob, json
 sys.path.insert(0, './gen-py')
-lib_path = glob.glob('../../lib/py/build/lib.*')
-if lib_path:
+if lib_path := glob.glob('../../lib/py/build/lib.*'):
     sys.path.insert(0, lib_path[0])
 
 from ThriftTest.ttypes import *

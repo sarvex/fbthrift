@@ -100,10 +100,7 @@ rs = RandomStuff()
 rs.a = 1
 rs.b = 2
 rs.c = 3
-if sys.version_info[0] >= 3:
-    rs.myintlist = list(range(20))
-else:
-    rs.myintlist = range(20)
+rs.myintlist = list(range(20)) if sys.version_info[0] >= 3 else range(20)
 rs.maps = {1:Wrapper(foo=Empty()), 2:Wrapper(foo=Empty())}
 rs.bigint = 124523452435
 rs.triple = 3.14

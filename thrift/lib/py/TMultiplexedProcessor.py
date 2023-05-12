@@ -37,19 +37,19 @@ class TMultiplexedProcessor(TProcessor):
     def setEventHandler(self, event_handler, serviceName=None):
         """ Set event handler for a service. If serviceName is None,
         set event handler for all services"""
-        if serviceName is not None:
-            if not serviceName in self.services:
-                raise TException("Cannot set event handler for service " +
-                        serviceName + ": no such service")
-            else:
-                self.services[serviceName].setEventHandler(event_handler)
-        else:
+        if serviceName is None:
             for processor in self.services.values():
                 processor.setEventHandler(event_handler)
 
+        elif serviceName not in self.services:
+            raise TException("Cannot set event handler for service " +
+                    serviceName + ": no such service")
+        else:
+            self.services[serviceName].setEventHandler(event_handler)
+
     def process(self, iprot, oprot, server_ctx=None):
         (name, type, seqid) = iprot.readMessageBegin()
-        if type != TMessageType.CALL and type != TMessageType.ONEWAY:
+        if type not in [TMessageType.CALL, TMessageType.ONEWAY]:
             raise TException("TMultiplex protocol only supports CALL & ONEWAY")
 
         if sys.version_info[0] >= 3 and isinstance(name, bytes):
@@ -60,13 +60,14 @@ class TMultiplexedProcessor(TProcessor):
                 name + ". Did you forget to use TMultiplexProtocol " +
                 "in your client?")
 
-        serviceName = name[0:index]
+        serviceName = name[:index]
         call = name[index + len(TMultiplexedProtocol.SEPARATOR):]
         if sys.version_info[0] >= 3:
             call = call.encode('utf-8')
-        if not serviceName in self.services:
-            raise TException("Service name not found: " + serviceName +
-                ". Did you forget to call registerProcessor()?")
+        if serviceName not in self.services:
+            raise TException(
+                f"Service name not found: {serviceName}. Did you forget to call registerProcessor()?"
+            )
 
         standardMessage = (
             call,

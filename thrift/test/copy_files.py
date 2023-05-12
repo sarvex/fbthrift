@@ -15,4 +15,4 @@ if __name__ == "__main__":
     if not os.path.exists(dir):
         os.makedirs(dir)
 
-    shutil.copy("EnumTest.thrift", dir + "/EnumTestStrict.thrift")
+    shutil.copy("EnumTest.thrift", f"{dir}/EnumTestStrict.thrift")

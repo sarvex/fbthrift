@@ -68,10 +68,10 @@ class TValidator:
 
         t_name, python_type, v_min, v_max = self.tinfo[thrift_type]
         if not isinstance(value, python_type):
-            error = "Value %s is not a %s" % (str(value), t_name)
+            error = f"Value {str(value)} is not a {t_name}"
         elif (v_min is not None and value < v_min) \
-                or (v_max is not None and value > v_max):
-            error = "Value %s not within %s boundaries" % (str(value), t_name)
+                    or (v_max is not None and value > v_max):
+            error = f"Value {str(value)} not within {t_name} boundaries"
         else:
             error = None
 
@@ -85,9 +85,9 @@ class TValidator:
         _log.debug('%s - MAP check:', name)
         ok = True
         for k, v in value.items():
-            if not self.check_type("%s key" % (name), k, k_type, k_specs):
+            if not self.check_type(f"{name} key", k, k_type, k_specs):
                 ok = False
-            if not self.check_type("%s[%s]" % (name, k), v, v_type, v_specs):
+            if not self.check_type(f"{name}[{k}]", v, v_type, v_specs):
                 ok = False
         return ok
 
@@ -106,21 +106,19 @@ class TValidator:
 
         if v_type == TType.STRUCT:
             struct_specs = specs[1]
-            ok = self.check_struct(name, value, struct_specs)
+            return self.check_struct(name, value, struct_specs)
         elif v_type == TType.MAP:
             k_type = specs[0]
             k_specs = specs[1]
             v_type = specs[2]
             v_specs = specs[3]
-            ok = self.check_map(name, value, k_type, k_specs, v_type, v_specs)
+            return self.check_map(name, value, k_type, k_specs, v_type, v_specs)
         elif v_type in (TType.LIST, TType.SET):
             v_type = specs[0]
             v_specs = specs[1]
-            ok = self.check_listset(name, value, v_type, v_specs)
+            return self.check_listset(name, value, v_type, v_specs)
         else:
-            ok = self.check_basic(name, value, v_type)
-
-        return ok
+            return self.check_basic(name, value, v_type)
 
     def check_struct(self, name, value, specs):
         _log.debug('%s - STRUCT check:', name)
@@ -134,7 +132,7 @@ class TValidator:
                 # Some fields of the struct might be not defined or
                 # skipped old fields and their spec will be None
                 continue
-            f_name = name + "." + str(spec[2])
+            f_name = f"{name}.{str(spec[2])}"
             f_type = spec[1]
             f_value = getattr(value, spec[2])
             f_specs = spec[3]

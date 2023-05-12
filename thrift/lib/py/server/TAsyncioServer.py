@@ -80,9 +80,7 @@ def ThriftAsyncServerFactory(
         try:
             processor = processor._processor_type(processor)
         except AttributeError:
-            raise TypeError(
-                "Unsupported processor type: {}".format(type(processor)),
-            )
+            raise TypeError(f"Unsupported processor type: {type(processor)}")
 
     if loop is None:
         loop = asyncio.get_event_loop()
@@ -154,7 +152,7 @@ class FramedProtocol(asyncio.Protocol):
             if len(self.recvd) < length + 4:
                 return
 
-            frame = self.recvd[0:4 + length]
+            frame = self.recvd[:4 + length]
             self.recvd = self.recvd[4 + length:]
             asyncio.async(self.message_received(frame))
 
@@ -224,7 +222,7 @@ class ThriftHeaderClientProtocol(FramedProtocol):
         iprot = THeaderProtocol(tmi)
         (fname, mtype, rseqid) = iprot.readMessageBegin()
 
-        method = getattr(self.client, "recv_" + fname.decode(), None)
+        method = getattr(self.client, f"recv_{fname.decode()}", None)
         if method is None:
             logger.error("Method %r is not supported", method)
             self.transport.close()
@@ -316,8 +314,7 @@ class TAsyncioServer(TServer):
             coro = self.loop.create_server(pfactory, self.host, self.port)
             self.server = self.loop.run_until_complete(coro)
         except Exception as e:
-            logging.error("Could not start server at port {}"
-                          .format(self.port), e)
+            logging.error(f"Could not start server at port {self.port}", e)
 
         if hasattr(self.server, "sockets"):
             for socket in self.server.sockets:
