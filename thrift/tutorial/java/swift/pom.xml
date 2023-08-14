@@ -35,7 +35,7 @@
     <dep.libthrift.version>0.14.0</dep.libthrift.version>
     <dep.jmxutils.version>1.18</dep.jmxutils.version>
     <dep.mycila.version>2.10.ga</dep.mycila.version>
-    <dep.netty.version>3.9.5.Final</dep.netty.version>
+    <dep.netty.version>3.9.8.Final</dep.netty.version>
   </properties>
 
   <dependencyManagement>
